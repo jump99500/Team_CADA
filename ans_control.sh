@@ -1,11 +1,9 @@
 #!/bin/bash
 sudo su -
-apt-get update
-apt-get install apt-transport-https wget gnupg
-apt-add-repository ppa:ansible/ansible
-useradd cada -s /bin/bash -m
-echo 'cada:cada' | chpasswd
-echo 'cada ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+sudo yum -y update && sudo yum install -y python
+sudo yum install wget -y
+sudo amazon-linux-extras list
+sudo amazon-linux-extras install -y ansible2
 sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 sudo sed -i "s/#Port 22/Port 22/g" /etc/ssh/sshd_config
 cat >> /etc/ansible/hosts << EOD

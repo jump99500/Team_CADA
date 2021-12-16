@@ -7,6 +7,7 @@ resource "aws_vpc" "vpc" {
   cidr_block = "192.168.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support = true
+  instance_tenancy = "default"
   tags = {
       "Name"    = "vpc"
   }
@@ -16,6 +17,7 @@ resource "aws_subnet" "pub_1" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = "192.168.0.0/24"
   availability_zone = "ap-northeast-2a"
+  #map_customer_owned_ip_on_launch = true
   tags = {
     "Name" = "pub-1"
   }
@@ -26,6 +28,7 @@ resource "aws_subnet" "pub_2" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = "192.168.1.0/24"
   availability_zone = "ap-northeast-2c"
+  #map_customer_owned_ip_on_launch = true
   tags = {
     "Name" = "pub-2"
   }

@@ -26,7 +26,7 @@ output "public_ip_bastion" {
 
 
 resource "aws_instance" "web" {
-  ami                    = "ami-0f8b8babb98cc66d0"    #ubuntu 18.04
+  ami                    = "ami-0263588f2531a56bd"    #ubuntu 18.04
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.id_rsa.id
   vpc_security_group_ids = [aws_security_group.security_web.id]

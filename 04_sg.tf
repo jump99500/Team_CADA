@@ -5,6 +5,17 @@ resource "aws_security_group" "security_bastion" {
 
   ingress = [
     {
+      description      = "icmp"
+      from_port        = -1
+      to_port          = -1
+      protocol         = "icmp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null
+      security_groups  = null
+      self             = null
+    },
+    {
       description      = "SSH"
       from_port        = 22 #나중에 포트포워딩 -> 10202
       to_port          = 22 #나중에 포트포워딩 -> 10202
@@ -114,6 +125,17 @@ resource "aws_security_group" "security_web" {
       prefix_list_ids  = []
       self             = false
     },
+    {
+      description      = "icmp"
+      from_port        = -1
+      to_port          = -1
+      protocol         = "icmp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null
+      security_groups  = null
+      self             = null
+    }
   ]
 
   egress = [
@@ -142,14 +164,25 @@ resource "aws_security_group" "security_was" {
 
   ingress = [
     {
+      description      = "icmp"
+      from_port        = -1
+      to_port          = -1
+      protocol         = "icmp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null
+      security_groups  = null
+      self             = null
+    },
+    {
       description      = "SSH-bastion"
       from_port        = 22
       to_port          = 22
       protocol         = "tcp"
       cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"]
-      security_groups  = null    #앤서블이 된다면 보안그룹 -> 베스쳔의 SG
-      prefix_list_ids  = null   
+      security_groups  = null #앤서블이 된다면 보안그룹 -> 베스쳔의 SG
+      prefix_list_ids  = null
       self             = false
     },
     {
@@ -164,6 +197,7 @@ resource "aws_security_group" "security_was" {
       self             = false
     }
   ]
+
 
   egress = [
     {
@@ -190,6 +224,17 @@ resource "aws_security_group" "security_db" {
   vpc_id      = aws_vpc.vpc.id
 
   ingress = [
+    {
+      description      = "icmp"
+      from_port        = -1
+      to_port          = -1
+      protocol         = "icmp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null
+      security_groups  = null
+      self             = null
+    },
     {
       description      = "MySQL"
       from_port        = 3306
@@ -230,6 +275,17 @@ resource "aws_security_group" "security_ansible" {
   vpc_id      = aws_vpc.vpc.id
 
   ingress = [
+    {
+      description      = "icmp"
+      from_port        = -1
+      to_port          = -1
+      protocol         = "icmp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = null
+      security_groups  = null
+      self             = null
+    },
     {
       description      = "SSH"
       from_port        = 22

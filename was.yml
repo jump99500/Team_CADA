@@ -1,0 +1,128 @@
+---
+- name: was
+  hosts: _was
+  become: true
+  tasks:
+          - name: jdk
+            apt:
+                    name: default-jdk
+                    state: latest
+          - name: useradd
+            user:
+                    name: tomcat
+                    system: true
+                    home: /opt/tomcat
+                    shell: /bin/false
+          - name: wget
+            get_url:
+                    url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.56/bin/apache-tomcat-9.0.56.tar.gz
+                    dest: /tmp
+          - name: tar
+            unarchive:
+                    src: /tmp/apache-tomcat-9.0.56.tar.gz
+                    dest: /opt/tomcat
+                    remote_src: true
+          - name: link
+            file:
+                    src: /opt/tomcat/apache-tomcat-9.0.56
+                    dest: /opt/tomcat/latest
+                    state: link
+          - name: owner
+            file:
+                    dest: /opt/tomcat/apache-tomcat-9.0.56
+                    owner: tomcat
+                    group: tomcat
+          - name: find
+            find:
+                    paths: /opt/tomcat/latest/bin/
+                    patterns: "*.sh"
+            register: sh
+          - name: cat
+            blockinfile:
+                    dest: /etc/systemd/system/tomcat.service
+                    content: |
+                            [Unit]
+                            Description=Tomcat 9 servlet container
+                            After=network.target
+
+                            [Service]
+                            Type=forking
+
+                            User=tomcat
+                            Group=tomcat
+
+                            Environment="JAVA_HOME=/usr/lib/jvm/default-java"
+                            Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true"
+
+                            Environment="CATALINA_BASE=/opt/tomcat/latest"
+                            Environment="CATALINA_HOME=/opt/tomcat/latest"
+                            Environment="CATALINA_PID=/opt/tomcat/latest/temp/tomcat.pid"
+                            Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+                            ExecStart=/opt/tomcat/latest/bin/startup.sh
+                            ExecStop=/opt/tomcat/latest/bin/shutdown.sh
+
+                            [Install]
+                            WantedBy=multi-user.target
+                    create: true
+          - name: wget connector
+            get_url:
+                    url: https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.26.tar.gz
+                    dest: .
+          - name: tar conn
+            unarchive:
+                    src: /home/ubuntu/mysql-connector-java-8.0.26.tar.gz
+                    dest: /opt/tomcat/latest/lib
+                    remote_src: true
+          - name: tomcat user
+            blockinfile:
+                    dest: /opt/tomcat/latest/conf/tomcat-users.xml
+                    content: |
+                              <role rolename="admin-gui"/>
+                              <role rolename="manager-gui"/>
+                              <user username="admin" password="admin_password" roles="admin-gui,manager-gui"/>
+                              <role rolename="manager-script"/>
+                              <role rolename="manager-gui"/>
+                              <role rolename="manager-jmx"/>
+                              <role rolename="manager-status"/>
+                              <user username="tomcat" password="tomcat" roles="manager-gui,manager-script,manager-status,manager-jmx"/>
+                    insertbefore: '^</tomcat-users>$'
+          - name: sed
+            replace:
+                    dest: "{{ item.dest }}"
+                    replace: "{{ item.line }}"
+                    regexp: "{{ item.regexp }}"
+            loop:
+                    - { dest: '/opt/tomcat/latest/webapps/manager/META-INF/context.xml', regexp: '<Valve', line: '<!--<Valve' }
+                    - { dest: '/opt/tomcat/latest/webapps/manager/META-INF/context.xml', regexp: '<Manager', line: '--><Manager' }
+                    - { dest: '/opt/tomcat/latest/webapps/host-manager/META-INF/context.xml', regexp: '<Valve', line: '<!--<Valve' }
+                    - { dest: '/opt/tomcat/latest/webapps/host-manager/META-INF/context.xml', regexp: '<Manager', line: '--><Manager' }
+          - name: sysctl daemon
+            systemd:
+                    name: tomcat
+                    daemon_reload: true
+                    state: started
+                    enabled: true
+          - name: git petclinic
+            git:
+                    repo: https://github.com/SteveKimbespin/petclinic_btc.git
+                    dest: ./petclinic_btc
+                    clone: true
+                    force: true
+          - name: rds replace
+            replace:
+                    dest: /home/ubuntu/petclinic_btc/pom.xml
+                    replace: "{{ item.line }}"
+                    regexp: "{{ item.regexp }}"
+            loop:
+                    - { regexp: '\[Change Me\]:3306', line: '{{ hostvars["localhost"]["rds"].instances[0].endpoint.address }}' }
+          - stat:
+                  path: /opt/tomcat/apache-tomcat-9.0.56/webapps/petclinic/WEB-INF/lib/h2-1.4.200.jar
+            register: h2
+          - stat:
+                  path: /opt/tomcat/apache-tomcat-9.0.56/webapps/petclinic/WEB-INF/lib/mysql-connector-java-8.0.19.jar
+            register: connector
+          - name: deploy
+            shell:
+                    cmd: ./mvnw tomcat7:deploy
+                    chdir: /home/ubuntu/petclinic_btc

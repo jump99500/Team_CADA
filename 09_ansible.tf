@@ -69,4 +69,3 @@ resource "aws_iam_instance_profile" "profile_ansible" {
   name = "cd-profile-ansible"
   role = aws_iam_role.role_ansible.name
 }
-

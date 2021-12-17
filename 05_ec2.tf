@@ -1,12 +1,12 @@
 resource "aws_instance" "bastion" {
-  ami                    = "ami-0263588f2531a56bd"    #리눅스 18.04
+  ami                    = "ami-0263588f2531a56bd"     #리눅스 18.04
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.id_rsa.id
   vpc_security_group_ids = [aws_security_group.security_bastion.id]
   availability_zone      = "ap-northeast-2a"
   private_ip             = "192.168.0.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
   subnet_id = aws_subnet.pub_1.id
-  user_data              = file("./webserver.sh")
+  user_data              = file("./ans_control.sh")
   tags = {
     "Name" = "cd-bastion"
   }
@@ -26,7 +26,7 @@ output "public_ip_bastion" {
 
 
 resource "aws_instance" "web" {
-  ami                    = "ami-0263588f2531a56bd"     #리눅스 18.04
+  ami                    = "ami-0263588f2531a56bd"      #리눅스 18.04
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.id_rsa.id
   vpc_security_group_ids = [aws_security_group.security_web.id]
@@ -41,7 +41,7 @@ resource "aws_instance" "web" {
 
 
 resource "aws_instance" "was" {
-  ami                    = "ami-0263588f2531a56bd"     #리눅스 18.04
+  ami                    = "ami-0263588f2531a56bd"      #리눅스 18.04
   instance_type          = "t2.medium"
   key_name               = aws_key_pair.id_rsa.id
   vpc_security_group_ids = [aws_security_group.security_was.id]
@@ -104,7 +104,7 @@ resource "aws_instance" "was" {
 
 /*
 resource "aws_instance" "web_2" {
-  ami                    = "ami-0263588f2531a56bd"
+  ami                    = "ami-0263588f2531a56bd" 
   instance_type          = "t2.micro"
   key_name               = aws_key_pair.id_rsa.id
   vpc_security_group_ids = [aws_security_group.security_web.id]

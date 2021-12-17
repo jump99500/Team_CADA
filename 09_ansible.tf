@@ -1,5 +1,5 @@
 resource "aws_instance" "ansible" {
-    ami = "ami-0263588f2531a56bd"
+    ami = "ami-0263588f2531a56bd"    #리눅스 18.04
     instance_type = "t2.micro"
     key_name = aws_key_pair.id_rsa.id
     vpc_security_group_ids = [aws_security_group.security_ansible.id]

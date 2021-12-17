@@ -58,6 +58,10 @@ resource "aws_lb_target_group_attachment" "alb_target_att" {
 
 }
 
+
+
+data "aws_elb_service_account" "elb_account" {}
+
 /*
 resource "aws_lb_target_group_attachment" "alb_target_ass_2" {
   target_group_arn = aws_lb_target_group.alb_target.arn

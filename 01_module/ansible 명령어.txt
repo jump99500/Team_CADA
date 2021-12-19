@@ -1,0 +1,147 @@
+#키 옮기기
+cd .ssh
+scp -i "id_rsa" id_rsa ec2-user@3.34.23.240:/home/ec2-user/
+
+#쉘(베스쳔)으로 접속해서
+sudo -i
+
+
+#/home/ec2-user 로 이동
+cd /home/ec2-user
+
+#앤서블에 필요한 툴들 까는 야믈파일
+vim install.yml
+
+---
+- hosts: localhost
+  become: yes
+
+  tasks:
+    - name: install pip
+      yum:
+        name:
+          - python-pip
+          - python3-pip
+        state: latest
+
+    - name: install boto
+      pip:
+        name:
+          - boto
+          - boto3
+
+
+
+#install 야믈 실행  !!!private_key_file 경로 맞는지 확인!@!!!!!! 
+#구성내용을 살펴보면 aws_ec2.yml이 인벤토리의 역할을함
+ansible-playbook install.yml
+
+#cfg파일 생성
+vi ansible.cfg
+
+[defaults]
+inventory = ./aws_ec2.yml
+host_key_checking = False
+pipelining = True
+roles_path = ./roles
+# forks = 1000
+remote_user = ec2-user
+private_key_file = /home/ec2-user/id_rsa
+
+[inventory]
+enable_plugins = aws_ec2
+
+[privilege_escalation]
+become = true
+become_method = sudo
+become_user = root
+become_ask_pass = false
+
+
+
+
+#IAM_role 본인의 엑세스키/비번 입력
+aws configure --profile default
+
+
+
+#aws_ec2야믈 생성 -> host로 묶어줌
+vi aws_ec2.yml
+
+
+
+plugin: aws_ec2
+
+boto_profile: default
+
+regions:
+  - ap-northeast-2
+filters:
+  instance-state-name: running
+
+compose:
+  ansible_host: private_ip_address
+
+hostnames:
+  - private-ip-address
+
+keyed_groups:
+  - key: tags
+
+
+#묶인 호스트들 확인 -> 예를 들어 filters에 tag:Name: web을 넣고, 
+#keyed_group:을 삭제하면 web인스턴스만 나옴
+ansible-inventory -i aws_ec2.yml --graph
+
+#명령 실행해보기 (야믈파일이 아니라 aws_ec2로 실행, 후에 명령을 실행할 호스트들도 aws_ec2가 됨.)
+ansible -m ping aws_ec2
+
+
+# /home/ec2-user에 index.html 파일 생성
+vi index.html
+CADABRA
+
+
+
+#아파치 야믈1 생성
+vi httpd.yml
+
+
+---
+- name: Install Apache webserver
+  hosts: aws_ec2
+  tasks:
+    - name: HTTPD is present
+      yum:
+        name: httpd
+        state: present
+    - name: Create index.html file
+      copy:
+        src: /home/ec2-user/index.html
+        dest: /var/www/html/index.html
+    - name: Start httpd
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+#httpd 야믈 파일 실행
+ansible-playbook httpd.yml
+
+
+#아파치야믈2 -> 위의 야믈이 안 되면 해보기
+vi httpd.yaml
+
+---
+- name: Install Apache webserver
+  hosts: aws_ec2
+  tasks:
+    - name: HTTPD is present
+      yum:
+        name: httpd
+        state: present
+    - name: Start httpd
+      service:
+        name: httpd
+        state: started
+        enabled: true

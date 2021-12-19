@@ -1,0 +1,5 @@
+AWS IAM 사용자 만들기
+
+엑세스ID → AKIA2UICVQQCX7WTUEK3
+
+비밀키 → +sGS25ZQAJLPae/glE7MHlnlA2HuGjtUZL4hWFz1

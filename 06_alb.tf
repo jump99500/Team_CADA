@@ -1,17 +1,16 @@
 resource "aws_lb" "alb" {
-  name               = "cd-alb"
+  name               = "${format("%s-alb", var.name)}"
   internal           = false  #외부
   load_balancer_type = "application"
   security_groups    = [aws_security_group.security_alb.id]
-  subnets            = [aws_subnet.pub_1.id, aws_subnet.pub_2.id]
-/*  access_logs {
-    bucket = aws_s3_bucket.log_bucket.bucket
+  subnets            = "${aws_subnet.public.*.id}"
+  access_logs {
+    bucket = aws_s3_bucket.cada_s3.bucket
     enabled = true
   }
   tags = {
-    "Name" = "cd-alb"
-  }
- */ 
+    "Name" = "${format("%s-alb", var.name)}"
+  } 
 }
 
 output "dns_name" {
@@ -19,7 +18,7 @@ output "dns_name" {
 }
 
 resource "aws_lb_target_group" "alb_target" {
-    name = "cd-alb-tg"
+    name = "${format("%s-alb-tg", var.name)}"
     port = 80
     protocol = "HTTP"
     vpc_id = aws_vpc.vpc.id
@@ -50,17 +49,24 @@ resource "aws_lb_listener" "alb_front_http" {
   }
 }
 
+data "aws_elb_service_account" "cd_elb_account" {}
+
+output "alb_dns_name" {
+  value = aws_lb.alb.dns_name
+}
+
 
 resource "aws_lb_target_group_attachment" "alb_target_att" {
+  count = var.web.count
   target_group_arn = aws_lb_target_group.alb_target.arn
-  target_id        = aws_instance.web.id   #오류 뜸 -> 변수처리
+  target_id        = aws_instance.web[count.index].id   #오류 뜸 -> 변수처리
   port             = "80"
 
 }
 
 
 
-data "aws_elb_service_account" "elb_account" {}
+#data "aws_elb_service_account" "elb_account" {}
 
 /*
 resource "aws_lb_target_group_attachment" "alb_target_ass_2" {

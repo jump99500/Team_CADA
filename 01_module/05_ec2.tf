@@ -4,7 +4,7 @@ resource "aws_instance" "bastion" {
   key_name               = var.key.name
   vpc_security_group_ids = [aws_security_group.security_bastion.id]
   availability_zone      = "ap-northeast-2a"
-  #private_ip             = "192.168.0.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
+  private_ip             = "192.168.0.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
   subnet_id              = aws_subnet.public.0.id
   user_data              = file("${path.module}/control.sh")
   tags = {
@@ -33,8 +33,14 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [aws_security_group.security_web.id]
   subnet_id              = aws_subnet.web_subnet[(count.index) % 2].id
   #availability_zone      = "ap-northeast-2a"
-  #private_ip             = "192.168.2.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
-  user_data              = file("${path.module}/web.sh")
+  private_ip             = "192.168.2.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
+  user_data              =<<-EOF
+#!/bin/bash
+sudo su -
+sudo sed -i "s/#Port 22/Port 22/g" /etc/ssh/sshd_config
+sudo systemctl restart sshd
+EOF
+
   tags = {
     "Name" = "${format("%s-web", var.name)}"
   }
@@ -50,11 +56,78 @@ resource "aws_instance" "was" {
   #availability_zone      = "ap-northeast-2a"
   #private_ip             = "192.168.4.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
   subnet_id              = aws_subnet.was_subnet[(count.index) % 2].id
-  user_data              = file("${path.module}/was.sh")
+  user_data              = <<-EOF
+#!/bin/bash
+sudo su -
+sudo sed -i "s/#Port 22/Port 22/g" /etc/ssh/sshd_config
+sudo systemctl restart sshd
+EOF
   tags = {
     "Name" = "${format("%s-was", var.name)}"
   }
 }
+
+resource "aws_iam_instance_profile" "profile_web" {
+  name = "profile-web"
+  role = aws_iam_role.role_web.name
+}
+
+resource "aws_iam_role" "role_web" {
+  name = "role-web"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+               "Service": "ec2.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "policy_web" {
+  name = "policy-web"
+  role = aws_iam_role.role_web.id
+
+  policy = <<END
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:ListObject",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.wafo_log_bucket.arn}/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "${aws_s3_bucket.wafo_log_bucket.arn}/*"
+            ]
+        }
+    ]
+}
+END
+}
+
+
 
 
 

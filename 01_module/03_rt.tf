@@ -17,7 +17,6 @@ resource "aws_route_table_association" "pub_ass" {
 }
 
 resource"aws_route_table" "web_route" {
-    count = "${length(var.cidr.web)}"
     vpc_id = aws_vpc.vpc.id
 
     route {
@@ -33,12 +32,11 @@ resource"aws_route_table" "web_route" {
 resource "aws_route_table_association" "web_ass" {
     count = "${length(var.cidr.web)}"
     subnet_id = "${aws_subnet.web_subnet[count.index].id}"
-    route_table_id = "${aws_route_table.web_route[count.index].id}"
+    route_table_id = "${aws_route_table.web_route.id}"
 }
 
 
 resource"aws_route_table" "was_route" {
-    count = "${length(var.cidr.was)}"
     vpc_id = aws_vpc.vpc.id
 
     route {
@@ -54,7 +52,7 @@ resource"aws_route_table" "was_route" {
 resource "aws_route_table_association" "was_ass" {
     count = "${length(var.cidr.was)}"
     subnet_id = "${aws_subnet.was_subnet[count.index].id}"
-    route_table_id = "${aws_route_table.was_route[count.index].id}"
+    route_table_id = "${aws_route_table.was_route.id}"
 }
 
 

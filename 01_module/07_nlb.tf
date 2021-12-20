@@ -2,15 +2,7 @@ resource "aws_lb" "nlb" {
   name               = format("%s-nlb", var.name)
   internal           = true #내부
   load_balancer_type = "network"
-  #  security_groups    = [aws_security_group.security_nlb.id]  nlb는 보안그룹 따로 안 받음?
   subnets = aws_subnet.web_subnet.*.id
-  access_logs {
-    bucket  = aws_s3_bucket.cada_s3.bucket
-    enabled = true
-  }
-  tags = {
-    "Name" = "${format("%s-nlb", var.name)}"
-  }
 }
 
 output "dns_name1" {

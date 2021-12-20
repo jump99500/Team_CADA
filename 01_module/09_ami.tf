@@ -13,4 +13,3 @@ resource "aws_ami_from_instance" "ami_was" {
     aws_instance.was
   ]
 }
-

@@ -1,4 +1,4 @@
-resource "aws_placement_group" "pg" {
+resource "aws_placement_group" "web-pg" {
   name     = "${format("%s-lacf-web", var.name)}"
   strategy =  "cluster"
 }
@@ -22,7 +22,10 @@ resource "aws_autoscaling_group" "atsg_web" {
 
 }
 
-
+resource "aws_placement_group" "was_pg" {
+  name     = "${format("%s-lacf-was", var.name)}"
+  strategy = "cluster"
+}
 
 resource "aws_autoscaling_group" "atsg_was" {
   name                      = "${format("%s-atsg-was", var.name)}"

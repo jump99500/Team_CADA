@@ -1,4 +1,4 @@
-provider "aws" { #aws 서비스를 이용
+provider "aws" { 
   region = "ap-northeast-2"
 
 }
@@ -61,12 +61,8 @@ resource "aws_subnet" "db_subnet" {
 }
 
 resource "aws_db_subnet_group" "db_subnet_group" {
-    name = "${format("%s-db-sg", var.name)}"
-    subnet_ids = "${aws_subnet.db_subnet.*.id}"
-
-    tags = {
-        name = "${format("%s-db-sg", var.name)}"
-    }
+    name = "cd-db-sg"
+    subnet_ids = ["aws_subnet.db_subnet1.id","aws_subnet.db_subnet2.id"]
 }
 
 
@@ -129,4 +125,3 @@ resource "aws_subnet" "ansible_subnet" {
   }
 }
 */
-

@@ -28,7 +28,7 @@ resource "aws_lb_target_group" "alb_target" {
     healthy_threshold     = 3
     interval              = 5
     matcher               = "200"
-    path                  = "/" 
+    path                  = "/health.html" 
     port                  = "traffic-port"
     protocol              = "HTTP"
     timeout               = 2
@@ -49,6 +49,12 @@ resource "aws_lb_listener" "alb_front_http" {
   }
 }
 
+data "aws_elb_service_account" "cd_elb_account" {}
+
+output "alb_dns_name" {
+  value = aws_lb.alb.dns_name
+}
+
 
 resource "aws_lb_target_group_attachment" "alb_target_att" {
   count = var.web.count
@@ -60,7 +66,7 @@ resource "aws_lb_target_group_attachment" "alb_target_att" {
 
 
 
-data "aws_elb_service_account" "elb_account" {}
+#data "aws_elb_service_account" "elb_account" {}
 
 /*
 resource "aws_lb_target_group_attachment" "alb_target_ass_2" {

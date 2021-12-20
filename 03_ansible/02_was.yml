@@ -1,0 +1,150 @@
+---
+- name: rds
+  hosts: localhost
+  vars_files:
+          - variable.yml
+  tasks:
+          - rds_instance_info:
+                    region: "{{ project_region }}"
+                    db_instance_identifier: "{{ project_name }}-db"
+            register: rds
+- name: was
+  hosts: _was
+  become: true
+  vars_files:
+          - variable.yml
+  vars:
+          ansible_ssh_private_key_file: ./id_rsa
+  tasks:
+          - name: jdk
+            shell: sudo amazon-linux-extras install java-openjdk11 -y
+            args:
+                    executable: /bin/bash
+          - name: groupadd tomcat
+            shell: sudo groupadd --system tomcat
+            args:
+                    executable: /bin/bash
+          - name: useradd tomcat
+            shell: sudo useradd -d /usr/share/tomcat -r -s /bin/false -g tomcat tomcat
+            args:
+                    executable: /bin/bash
+          - name: wget tomcat
+            shell: wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.56/bin/apache-tomcat-9.0.56.tar.gz
+            args:
+                    executable: /bin/bash
+          - name: tar tomcat
+            shell: sudo tar xf apache-tomcat-9.0.56.tar.gz -C /usr/share/
+            args:
+                    executable: /bin/bash
+          - name: ln tomcat
+            shell: sudo ln -s /usr/share/apache-tomcat-9.0.56/ /usr/share/tomcat
+            args:
+                    executable: /bin/bash
+          - name: chown tomcat1
+            shell: sudo chown -R tomcat:tomcat /usr/share/tomcat
+            args:
+                    executable: /bin/bash
+          - name: chown tomcat2
+            shell: sudo chown -R tomcat:tomcat /usr/share/apache-tomcat-9.0.56
+            args:
+                    executable: /bin/bash
+          - name: cat tomcat service
+            blockinfile:
+                   dest: /etc/systemd/system/tomcat.service
+                   content: |
+                           [Unit]
+                           Description=Tomcat Server
+                           After=syslog.target network.target
+
+                           [Service]
+                           Type=forking
+                           User=tomcat
+                           Group=tomcat
+
+                           Environment=JAVA_HOME=/usr/lib/jvm/jre
+                           Environment='JAVA_OPTS=-Djava.awt.headless=true'
+                           Environment=CATALINA_HOME=/usr/share/tomcat
+                           Environment=CATALINA_BASE=/usr/share/tomcat
+                           Environment=CATALINA_PID=/usr/share/tomcat/temp/tomcat.pid
+                           Environment='CATALINA_OPTS=-Xms512M -Xmx1024M'
+                           ExecStart=/usr/share/tomcat/bin/catalina.sh start
+                           ExecStop=/usr/share/tomcat/bin/catalina.sh stop
+                           [Install]
+                           WantedBy=multi-user.target
+                   create: true
+          - name: tomcat user
+            blockinfile:
+                    dest: /usr/share/tomcat/conf/tomcat-users.xml
+                    content: |
+                            <role rolename="admin-gui"/>
+                            <role rolename="manager-gui"/>
+                            <user username="admin" password="admin_password" roles="admin-gui,manager-gui"/>
+                            <role rolename="manager-script"/>
+                            <role rolename="manager-gui"/>
+                            <role rolename="manager-jmx"/>
+                            <role rolename="manager-status"/>
+                            <user username="tomcat" password="tomcat" roles="manager-gui,manager-script,manager-status,manager-jmx"/>
+                                                insertbefore: "^</tomcat-users>$"
+          - name: sed
+            replace:
+                    dest: "{{ item.dest }}"
+                    replace: "{{ item.line }}"
+                    regexp: "{{ item.regexp }}"
+            loop:
+                    - { dest: "/usr/share/tomcat/webapps/manager/META-INF/context.xml", regexp: "<Valve", line: "<!--<Valve" }
+                    - { dest: "/usr/share/tomcat/webapps/manager/META-INF/context.xml", regexp: "<Manager", line: "--><Manager" }
+                    - { dest: "/usr/share/tomcat/webapps/host-manager/META-INF/context.xml", regexp: "<Valve", line: "<!--<Valve" }
+                    - { dest: "/usr/share/tomcat/webapps/host-manager/META-INF/context.xml", regexp: "<Manager", line: "--><Manager" }
+          - name: sysctl daemon
+            systemd:
+                    name: tomcat
+                    daemon_reload: true
+                    state: started
+                    enabled: true
+          - name: git install
+            shell: sudo yum install git -y
+            args:
+                    executable: /bin/bash
+          - name: git petclinic
+            shell: git clone https://github.com/SteveKimbespin/petclinic_btc.git /home/ec2-user/petclinic_btc
+            args:
+                    daemon_reload: true
+                    state: started
+                    enabled: true
+          - name: chown petclinic
+            shell: sudo chown -R tomcat:tomcat /home/ec2-user/petclinic_btc
+            args:
+                    executable: /bin/bash
+          - name: mysql install
+            shell: sudo yum install https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm -y
+            args:
+                    executable: /bin/bash
+          - name: mysql install 2
+            shell: sudo yum install mysql-community-server -y
+            args:
+                    executable: /bin/bash
+          - name: mysql start
+            service:
+                    name: mysqld
+                    state: started
+                    enabled: true
+          - name: deploy
+            shell:
+                    cmd: ./mvnw tomcat7:deploy
+                    chdir: /home/ec2-user/petclinic_btc
+            ignore_errors: true
+          - name: sed pom 1
+            shell: sed -i '527d' /home/ec2-user/petclinic_btc/pom.xml
+            args:
+                    excutable: /bin/bash
+          - name: rds replace
+            replace:
+                    dest: /home/ec2-user/petclinic_btc/pom.xml
+                    replace: "{{ item.endpoint }}"
+                    regexp: "{{ item.change }}"
+            loop:
+                    - { change: '\[Change Me]', endpoint: '{{ hostvars["localhost"]["rds"].instance[0].endpoint.address }}' }
+          - name: deploy mysql
+            shell:
+                    cmd: ./mvnw tomcat7:redeploy -P MySQL
+                    chdir: /home/ec2-user/petclinic_btc

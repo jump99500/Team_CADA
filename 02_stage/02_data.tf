@@ -84,7 +84,7 @@ module "test" {
     instance_class       = "db.t3.micro"
     multi_az             = "true"
     name                 = "petclinic"
-    username             = "cd"
+    username             = "root"
     password             = "petclinic"
     backup_window        = "12:29-13:29"
     storage_type         = "gp2"

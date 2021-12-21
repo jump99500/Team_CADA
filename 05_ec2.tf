@@ -6,7 +6,7 @@ resource "aws_instance" "bastion" {
   availability_zone      = "ap-northeast-2a"
   private_ip             = "192.168.0.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
   subnet_id              = aws_subnet.public.0.id
-  user_data              = file("${path.module}/control.sh")
+  user_data              =  file("${path.module}/s3_mount.sh")
   tags = {
     "Name" = "${format("%s-bastion", var.name)}"
   }
@@ -15,7 +15,7 @@ resource "aws_instance" "bastion" {
 resource "aws_eip" "eip_bastion" {
   vpc      = true
   instance = aws_instance.bastion.id
-  #associate_with_private_ip = "10.0.0.11" #위의 Private ip가 주석처리 되었으므로 얘도 주석처리
+  #associate_with_private_ip = "192.168.0.10" #위의 Private ip가 주석처리 되었으므로 얘도 주석처리
   depends_on = [aws_internet_gateway.igw]
 }
 
@@ -31,9 +31,10 @@ resource "aws_instance" "web" {
   instance_type          = var.web.instance_type
   key_name               = var.key.name
   vpc_security_group_ids = [aws_security_group.security_web.id]
-  subnet_id              = aws_subnet.web_subnet[(count.index) % 2].id
-  #availability_zone      = "ap-northeast-2a"
-  private_ip             = "192.168.2.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
+  subnet_id              = aws_subnet.web_subnet[0].id
+  availability_zone      = "ap-northeast-2a"
+  #private_ip             = "192.168.2.10" 
+  iam_instance_profile = aws_iam_instance_profile.profile_web.name
   user_data              =<<-EOF
 #!/bin/bash
 sudo su -
@@ -53,9 +54,9 @@ resource "aws_instance" "was" {
   instance_type          = var.was.instance_type
   key_name               = var.key.name
   vpc_security_group_ids = [aws_security_group.security_was.id]
-  #availability_zone      = "ap-northeast-2a"
-  #private_ip             = "192.168.4.10" #하도 오류가 많이 나서 일단 주석처리 -> 근데 본인 마음대로 하면 됨
-  subnet_id              = aws_subnet.was_subnet[(count.index) % 2].id
+  availability_zone      = "ap-northeast-2a"
+  #private_ip             = "192.168.4.10"
+  subnet_id              = aws_subnet.was_subnet[0].id
   user_data              = <<-EOF
 #!/bin/bash
 sudo su -
@@ -110,7 +111,7 @@ resource "aws_iam_role_policy" "policy_web" {
                 "s3:PutObject"
             ],
             "Resource": [
-                "${aws_s3_bucket.wafo_log_bucket.arn}/*"
+                "${aws_s3_bucket.cada_s3.arn}/*"
             ]
         },
         {
@@ -119,7 +120,7 @@ resource "aws_iam_role_policy" "policy_web" {
                 "s3:ListBucket"
             ],
             "Resource": [
-                "${aws_s3_bucket.wafo_log_bucket.arn}/*"
+                "${aws_s3_bucket.cada_s3.arn}/*"
             ]
         }
     ]

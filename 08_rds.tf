@@ -22,3 +22,8 @@ resource "aws_db_instance" "database" {
     "Name" = "${format("%s-db", var.name)}"
   }
 }
+
+resource "aws_db_subnet_group" "db_subnet_group" {
+  name       = "cd-dbsg"
+  subnet_ids = [aws_subnet.db_subnet_1.id, aws_subnet.db_subnet_2.id]
+}

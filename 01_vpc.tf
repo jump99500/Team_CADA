@@ -48,24 +48,24 @@ resource "aws_subnet" "was_subnet" {
     }
 }
 
-
-resource "aws_subnet" "db_subnet" {
-    vpc_id = aws_vpc.vpc.id
-    count = "${length(var.cidr.db)}"
-    cidr_block = "${var.cidr.db[count.index]}"
-    availability_zone = "${var.region.region}${var.region.az[count.index]}"
-
-    tags = {
-        Name = "${format("db-%s", var.region.az[count.index])}" 
-    }
-}
-
-resource "aws_db_subnet_group" "db_subnet_group" {
-    name = "cd-db-sg"
-    subnet_ids = ["aws_subnet.db_subnet1.id","aws_subnet.db_subnet2.id"]
+resource "aws_subnet" "db_subnet_1" {
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = "192.168.6.0/24"
+  availability_zone = "ap-northeast-2a"
+  tags = {
+    "Name" = "db-1"
+  }
 }
 
 
+resource "aws_subnet" "db_subnet_2" {
+  vpc_id            = aws_vpc.vpc.id
+  cidr_block        = "192.168.7.0/24"
+  availability_zone = "ap-northeast-2c"
+  tags = {
+    "Name" = "db-2"
+  }
+}
 
 
 /*

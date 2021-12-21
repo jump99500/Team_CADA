@@ -16,14 +16,14 @@ resource "aws_route_table_association" "pub_ass" {
   route_table_id = "${aws_route_table.public_rt.id}"
 }
 
-resource"aws_route_table" "web_route" {
-    vpc_id = aws_vpc.vpc.id
 
+#private 라우트 테이블
+resource"aws_route_table" "pri_route" {
+    vpc_id = aws_vpc.vpc.id
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_nat_gateway.nat_gateway[(count.index)%2].id}"
+        gateway_id = aws_nat_gateway.nat_gateway.id
     }
-
     tags = {
         Name = "${format("%s-webrt", var.name)}"
     }
@@ -32,27 +32,14 @@ resource"aws_route_table" "web_route" {
 resource "aws_route_table_association" "web_ass" {
     count = "${length(var.cidr.web)}"
     subnet_id = "${aws_subnet.web_subnet[count.index].id}"
-    route_table_id = "${aws_route_table.web_route.id}"
+    route_table_id = aws_route_table.pri_route.id
 }
 
-
-resource"aws_route_table" "was_route" {
-    vpc_id = aws_vpc.vpc.id
-
-    route {
-        cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_nat_gateway.nat_gateway[(count.index)%2].id}"
-    }
-
-    tags = {
-        Name = "${format("%s-wasrt", var.name)}"
-    }
-}
 
 resource "aws_route_table_association" "was_ass" {
     count = "${length(var.cidr.was)}"
     subnet_id = "${aws_subnet.was_subnet[count.index].id}"
-    route_table_id = "${aws_route_table.was_route.id}"
+    route_table_id = aws_route_table.pri_route.id
 }
 
 

@@ -2,6 +2,8 @@
 sudo cat > /home/ec2-user/.ssh/id_rsa << EOF
 -----BEGIN RSA PRIVATE KEY-----
 
+
+
 -----END RSA PRIVATE KEY-----
 EOF
 sudo chmod 600 /home/ec2-user/.ssh/id_rsa
@@ -43,6 +45,6 @@ sudo yum install -y git
 sudo git clone https://github.com/jump99500/TeamCada_Ansible.git /root/ansible
 cp /root/.ssh/id_rsa /root/ansible
 cd ansible
-ansible-playbook web.yaml
-ansible-playbook was.yaml
-ansible-playbook efs_was.yaml
+ansible-playbook web.yml
+ansible-playbook was.yml
+ansible-playbook efs_was.yml

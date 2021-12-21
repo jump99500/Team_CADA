@@ -1,8 +1,9 @@
 #!/bin/bash
 sudo cat > /home/ec2-user/.ssh/id_rsa << EOF
------BEGIN RSA PRIVATE KEY-----
 
------END RSA PRIVATE KEY-----
+
+
+
 EOF
 sudo chmod 600 /home/ec2-user/.ssh/id_rsa
 sudo su -

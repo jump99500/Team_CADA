@@ -86,9 +86,11 @@ resource "aws_ebs_volume" "ebs" {
   }
 }
 resource "aws_volume_attachment" "ebs_att" {
-  device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.ebs.id   #선택한 볼륨 id
-  instance_id = aws_instance.bastion.id #연결할 인스턴스 ID
+  device_name  = "/dev/sdh"
+  volume_id    = aws_ebs_volume.ebs.id   #선택한 볼륨 id
+  instance_id  = aws_instance.bastion.id #연결할 인스턴스 ID
+  force_detach = true
+  skip_destroy = true
 }
 
 resource "aws_efs_file_system" "cd-efs" {
@@ -99,7 +101,7 @@ resource "aws_efs_file_system" "cd-efs" {
 }
 
 resource "aws_efs_mount_target" "cd-efs-mount-target" {
-  count           = "${length(var.cidr.was)}"
+  count           = length(var.cidr.was)
   file_system_id  = aws_efs_file_system.cd-efs.id
   subnet_id       = aws_subnet.was_subnet[count.index].id
   security_groups = [aws_security_group.security_efs.id]

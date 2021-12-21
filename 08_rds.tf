@@ -6,7 +6,7 @@ resource "aws_db_instance" "database" {
   instance_class       = var.database.instance_class
   multi_az             = var.database.multi_az
   name                 = var.database.name
-  identifier           = format("%s-db", var.name)
+  identifier           = "cd"
   username             = var.database.username
   password             = var.database.password
   parameter_group_name = "default.mysql8.0"
